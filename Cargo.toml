@@ -1,0 +1,14 @@
+[package]
+name = "gcdn"
+version = "0.2.0"
+edition = "2024"
+authors = ["Atlas Dostal <email@atlasdostal.com>"]
+repository = "https://github.com/atlv24/gcdn"
+keywords = ["gcd", "lcm", "division", "integer", "math"]
+categories = ["algorithms"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+description = "An algorithmically faster implementation of variadic GCD."
+
+[dependencies]
+num-traits = "0.2"
