@@ -25,10 +25,10 @@ where
 {
     let mut a = uabs(a);
     let mut b = uabs(b);
-    let s = min2(expot(a), expot(b));
-    (a, b) = sort2(unpot(a), unpot(b));
+    let s = min2(two_part(a), two_part(b));
+    (a, b) = sort2(odd(a), odd(b));
     while b > U::one() {
-        (a, b) = sort2(unpot(a - b), b)
+        (a, b) = sort2(odd(a - b), b)
     }
     if b == U::one() {
         a = U::one()
@@ -45,16 +45,16 @@ where
     let mut a = uabs(a);
     let mut b = uabs(b);
     let mut c = uabs(c);
-    let s = min3(expot(a), expot(b), expot(c));
-    (a, b, c) = sort3(unpot(a), unpot(b), unpot(c));
+    let s = min3(two_part(a), two_part(b), two_part(c));
+    (a, b, c) = sort3(odd(a), odd(b), odd(c));
     while c > U::one() {
-        (a, b, c) = sort3(unpot(a - b), unpot(b - c), c)
+        (a, b, c) = sort3(odd(a - b), odd(b - c), c)
     }
     if c == U::one() {
         b = U::one()
     }
     while b > U::one() {
-        (a, b) = sort2(unpot(a - b), b)
+        (a, b) = sort2(odd(a - b), b)
     }
     if b == U::one() {
         a = U::one()
@@ -72,22 +72,22 @@ where
     let mut b = uabs(b);
     let mut c = uabs(c);
     let mut d = uabs(d);
-    let s = min4(expot(a), expot(b), expot(c), expot(d));
-    (a, b, c, d) = sort4(unpot(a), unpot(b), unpot(c), unpot(d));
+    let s = min4(two_part(a), two_part(b), two_part(c), two_part(d));
+    (a, b, c, d) = sort4(odd(a), odd(b), odd(c), odd(d));
     while d > U::one() {
-        (a, b, c, d) = sort4(unpot(a - b), unpot(b - c), unpot(c - d), d);
+        (a, b, c, d) = sort4(odd(a - b), odd(b - c), odd(c - d), d);
     }
     if d == U::one() {
         c = U::one()
     }
     while c > U::one() {
-        (a, b, c) = sort3(unpot(a - b), unpot(b - c), c);
+        (a, b, c) = sort3(odd(a - b), odd(b - c), c);
     }
     if c == U::one() {
         b = U::one()
     }
     while b > U::one() {
-        (a, b) = sort2(unpot(a - b), b);
+        (a, b) = sort2(odd(a - b), b);
     }
     if b == U::one() {
         a = U::one()
@@ -101,44 +101,52 @@ where
     T: PrimInt + WrappingSub + WrappingShr + UAbs<U>,
     U: PrimInt + WrappingSub + WrappingShr,
 {
-    if vec.is_empty() {
-        return U::one();
-    }
-    if vec.len() == 1 {
-        return uabs(vec[0]);
+    match vec.len() {
+        0 => return U::one(),
+        1 => return uabs(vec[0]),
+        2 => return gcd2(vec[0], vec[1]),
+        3 => return gcd3(vec[0], vec[1], vec[2]),
+        4 => return gcd4(vec[0], vec[1], vec[2], vec[3]),
+        _ => {}
     }
     let mut or = vec[0];
     for x in vec.iter() {
-        // gcd is 1 if any number is 1
         if *x == T::one() {
             return U::one();
         }
-        // two's complement allows this to work with negative numbers
         or = or | *x;
     }
-    let s = expot(uabs(or));
+    let s = two_part(uabs(or));
     for x in vec.iter_mut() {
-        *x = iabs(unpot(uabs(*x)));
-        // x has only factors of two, so the gcd must be a power of two
-        // 1 << s is the largest power of two it can be
+        *x = iabs(odd(uabs(*x)));
         if *x == T::one() {
             return s;
         }
     }
-    loop {
-        vec.sort_by(|a, b| b.cmp(a));
-        let mut prev = 0;
-        for i in 1..vec.len() {
-            let x = vec[i];
-            if x == T::zero() {
-                return uabs(vec[prev]) * s;
+    vec.sort_by(|a, b| b.cmp(a));
+    for k in (2..=vec.len()).rev() {
+        // SAFETY: k is in 2..=vec.len(), so k-1 and k-2 are valid indices.
+        // prev and i are in 0..k, so within bounds.
+        unsafe {
+            loop {
+                if uabs(*vec.get_unchecked(k - 1)) <= U::one() {
+                    break;
+                }
+                let mut prev = 0;
+                for i in 1..k {
+                    let x = vec.get_unchecked(prev).wrapping_sub(vec.get_unchecked(i));
+                    let x = x.wrapping_shr(x.trailing_zeros());
+                    *vec.get_unchecked_mut(prev) = x;
+                    prev = i;
+                }
+                vec[..k].sort_unstable_by(|a, b| b.cmp(a));
             }
-            let x = vec[prev].wrapping_sub(&x);
-            let x = x.wrapping_shr(x.trailing_zeros());
-            vec[prev] = x;
-            prev = i;
+            if *vec.get_unchecked(k - 1) == T::one() {
+                *vec.get_unchecked_mut(k - 2) = T::one();
+            }
         }
     }
+    uabs(*unsafe { vec.get_unchecked(0) }) * s
 }
 
 /// LCM of 2 arguments.
@@ -149,11 +157,11 @@ where
 {
     let mut a = uabs(a);
     let mut b = uabs(b);
-    let s = max2(expot(a), expot(b));
-    (a, b) = sort2(unpot(a), unpot(b));
+    let s = max2(two_part(a), two_part(b));
+    (a, b) = sort2(odd(a), odd(b));
     let lcm = a * b * s;
     while b > U::one() {
-        (a, b) = sort2(unpot(a - b), b);
+        (a, b) = sort2(odd(a - b), b);
     }
     if b == U::one() || a <= U::one() {
         lcm
@@ -168,7 +176,6 @@ where
     T: UAbs<U>,
     U: PrimInt + WrappingShr + WrappingSub,
 {
-    // TODO: better implementation
     lcm2(iabs(lcm2(a, b)), c)
 }
 
@@ -178,7 +185,6 @@ where
     T: UAbs<U>,
     U: PrimInt + WrappingShr + WrappingSub,
 {
-    // TODO: better implementation
     lcm2(iabs(lcm2(iabs(lcm2(a, b)), c)), d)
 }
 

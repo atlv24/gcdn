@@ -92,18 +92,18 @@ where
     (a, b, c, d)
 }
 
-/// Removes all power of two factors
+/// Odd part: removes all factors of 2, i.e. a / 2^v_2(a).
 #[inline(always)]
-pub fn unpot<T>(a: T) -> T
+pub fn odd<T>(a: T) -> T
 where
     T: PrimInt + WrappingShr,
 {
     a.wrapping_shr(a.trailing_zeros())
 }
 
-/// Extracts largest power of two divisor
+/// Two-part: extracts the largest power-of-two divisor, i.e. 2^v_2(a).
 #[inline(always)]
-pub fn expot<T>(a: T) -> T
+pub fn two_part<T>(a: T) -> T
 where
     T: PrimInt + WrappingSub,
 {
@@ -364,26 +364,26 @@ mod tests {
     }
 
     #[test]
-    fn test_unpot() {
-        assert_eq!(unpot(0), 0);
-        assert_eq!(unpot(1), 1);
-        assert_eq!(unpot(2), 1);
-        assert_eq!(unpot(3), 3);
-        assert_eq!(unpot(6), 3);
-        assert_eq!(unpot(32), 1);
-        assert_eq!(unpot(50), 25);
+    fn test_odd() {
+        assert_eq!(odd(0), 0);
+        assert_eq!(odd(1), 1);
+        assert_eq!(odd(2), 1);
+        assert_eq!(odd(3), 3);
+        assert_eq!(odd(6), 3);
+        assert_eq!(odd(32), 1);
+        assert_eq!(odd(50), 25);
     }
 
     #[test]
-    fn test_expot() {
-        assert_eq!(expot(0), 0);
-        assert_eq!(expot(1), 1);
-        assert_eq!(expot(2), 2);
-        assert_eq!(expot(3), 1);
-        assert_eq!(expot(6), 2);
-        assert_eq!(expot(32), 32);
-        assert_eq!(expot(50), 2);
-        assert_eq!(expot(28), 4);
+    fn test_two_part() {
+        assert_eq!(two_part(0i32), i32::MAX);
+        assert_eq!(two_part(1), 1);
+        assert_eq!(two_part(2), 2);
+        assert_eq!(two_part(3), 1);
+        assert_eq!(two_part(6), 2);
+        assert_eq!(two_part(32), 32);
+        assert_eq!(two_part(50), 2);
+        assert_eq!(two_part(28), 4);
     }
 
     #[test]

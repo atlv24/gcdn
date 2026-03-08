@@ -17,17 +17,22 @@ Add it to your Cargo.toml:
 
 ```toml
 [dependencies]
-gcdn = "0.1"
+gcdn = "0.3"
 ```
 
-# Example
+## Example
 
-```rs
+```rust
 assert_eq!(gcd4(15, 120, 30, 25), 5u32);
 
 // needs mutable access because it runs the algorithm in-place to avoid allocation
 assert_eq!(gcdn(&mut [15, 120, 30, 25]), 5u32);
 ```
+
+## Safety
+
+This crate uses unsafe code for performance.
+It has been extensively tested to ensure it behaves correctly.
 
 ## License
 
